@@ -1,0 +1,23 @@
+#!/bin/bash
+# Docker Hub  post push hook - used when executing a build rule or automated build
+#
+# We use variables Docker Hub provides to us:
+#  SOURCE_COMMIT: the SHA1 hash of the commit being tested.
+#  DOCKER_TAG: the Docker repository tag being built. Ex: 1.0.5, 1.0.7-stable
+#  CACHE_TAG: cached Docker repository tag of the prior build
+#  DOCKER_REPO: the name of the Docker repository being built. Ex: happygears/terragrunt-docker
+#  IMAGE_NAME: the name and tag of the Docker repository being built.
+#    (This variable is a combination of DOCKER_REPO:DOCKER_TAG.)
+#
+set -e
+
+# Get full version of curent build by stripping everything after first '-'
+MAJ_MIN_BUG=${DOCKER_TAG%%-*}
+
+echo "Adding 'latest' tag to $DOCKER_TAG"
+docker tag $IMAGE_NAME $DOCKER_REPO:latest
+docker push $DOCKER_REPO:latest
+
+echo "Adding commit hash tag to $DOCKER_TAG"
+docker tag $IMAGE_NAME $DOCKER_REPO:commit-${SOURCE_COMMIT:0:7}
+docker push $DOCKER_REPO:commit-${SOURCE_COMMIT:0:7}
